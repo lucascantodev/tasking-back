@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 djangorestframework = "*"
 djangorestframework-simplejwt = "*"
+django-environ = "*"
 
 [dev-packages]
 
