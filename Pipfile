@@ -8,6 +8,7 @@ djangorestframework = "*"
 djangorestframework-simplejwt = "*"
 django-environ = "*"
 psycopg2 = "*"
+pycodestyle = "*"
 
 [dev-packages]
 
