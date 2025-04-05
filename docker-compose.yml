@@ -1,0 +1,16 @@
+volumes:
+  tasking_back_postgres_data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: tasking_back_postgres
+    volumes:
+      - tasking_back_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=tasking_back
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
