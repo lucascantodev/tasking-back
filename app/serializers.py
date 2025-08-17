@@ -6,7 +6,25 @@ from app.models import List, Task
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
-        fields = ["url", "username", "email", "groups"]
+        fields = ["id", "first_name", "email", "date_joined"]
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "first_name", "email", "password", "date_joined"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "password": {"write_only": True},
+            "date_joined": {"read_only": True},
+        }
+
+    def create(self, validated_data):
+        user = User(**validated_data)
+        user.set_password(validated_data["password"])
+        user.username = user.email
+        user.save()
+        return user
 
 
 class GroupSerializer(serializers.HyperlinkedModelSerializer):
