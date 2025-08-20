@@ -67,12 +67,9 @@ class ListCreateListView(APIView):
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def get(self, request):
-        paginator = PageNumberPagination()
-        paginator.page_size = request.query_params.get("limit", 10)
-        lists = List.objects.filter(user=request.user)
-        result_page = paginator.paginate_queryset(lists, request)
-        serializer = ListSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        lists = List.objects.filter(user=request.user).order_by("-created_at")
+        serializer = ListSerializer(lists, many=True)
+        return Response(serializer.data)
 
 
 class ListFindUpdateDeleteView(APIView):
