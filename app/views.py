@@ -12,6 +12,7 @@ from app.serializers import (
     TaskSerializer,
 )
 from rest_framework.pagination import PageNumberPagination
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -33,6 +34,50 @@ class GroupViewSet(viewsets.ModelViewSet):
     serializer_class = GroupSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+# Simple wrapper around the TokenObtainPairView that should behave same as the wrapped view but 
+# setting refreshToken in cookies and return user data along with 
+class TokenObtainPairViewWrapper(APIView):
+    def post(self, request):
+        serializer = TokenObtainPairSerializer(data=request.data)
+        if serializer.is_valid():
+            user = User.objects.get(email=request.data.get("username")) # username doesn't exist on this request
+            user_data = UserSerializer(user, context={"request": request}).data
+            user_data.pop("password", None)  # removes the field if present
+            data = {
+                "user": user_data,
+                "access": serializer.validated_data["access"],
+                "refresh": serializer.validated_data["refresh"]
+            }
+            response = Response(data, status=status.HTTP_200_OK)
+            response.set_cookie(
+                key="refreshToken",
+                value=serializer.validated_data["refresh"],
+                httponly=True,
+                secure=True,
+                samesite="None",  # required if frontend and backend are on different domains
+                max_age=60 * 60 * 24 * 7  # example: 7 days
+            )
+            return response
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Simple wrapper around the TokenRefreshView that should behave same as the wrapped view but 
+# setting refreshToken in cookies
+class TokenRefreshViewWrapper(APIView):
+    def post(self, request):
+        serializer = TokenRefreshSerializer(data=request.data)
+        if serializer.is_valid():
+            response = Response(serializer.validated_data, status=status.HTTP_200_OK)
+            response.set_cookie(
+                key="refreshToken",
+                value=serializer.validated_data["refresh"],
+                httponly=True,
+                secure=True,
+                samesite="None",  # required if frontend and backend are on different domains
+                max_age=60 * 60 * 24 * 7  # example: 7 days
+            )
+
+            return response
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserMeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -49,10 +94,27 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return Response(
-                UserSerializer(user, context={"request": request}).data,
-                status=status.HTTP_201_CREATED,
+            user_data = UserSerializer(user, context={"request": request}).data
+            token_serializer = TokenObtainPairSerializer(
+                data={"username": user.username, "password": request.data.get("password")}
             )
+            if token_serializer.is_valid():
+                data = {
+                    "user": user_data,
+                    "access": token_serializer.validated_data["access"],
+                    "refresh": token_serializer.validated_data["refresh"]
+                }
+                response = Response(data, status=status.HTTP_201_CREATED)
+                response.set_cookie(
+                    key="refreshToken",
+                    value=token_serializer.validated_data["refresh"],
+                    httponly=True,
+                    secure=True,
+                    samesite="None",  # required if frontend and backend are on different domains
+                    max_age=60 * 60 * 24 * 7  # example: 7 days
+                )
+                return response
+            return Response(token_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
@@ -179,3 +241,11 @@ class TaskFindUpdateDeleteView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except (List.DoesNotExist, Task.DoesNotExist):
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+class LogoutView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        response.delete_cookie("refreshToken")
+        return response
