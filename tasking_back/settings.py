@@ -18,7 +18,10 @@ from environ import Env
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Setup env
-env = Env(DEBUG=(bool, False))
+env = Env(
+    DEBUG=(bool, False), 
+    CORS_ALLOWED_ORIGINS=(lambda v: v.split(", "), ["http://localhost:3000"])
+)
 Env.read_env(Path(BASE_DIR).joinpath(".env"))
 
 # Quick-start development settings - unsuitable for production
@@ -44,12 +47,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
+    "corsheaders",
     "app",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -132,6 +137,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+CORS_ALLOW_CREDENTIALS = True # Needed, bc front app uses credentials: include and requires cookies
 
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",

@@ -1,6 +1,5 @@
 from django.urls import include, path
 from rest_framework import routers
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from app import views
 
@@ -15,25 +14,27 @@ urlpatterns = [
     path("users/me/", views.UserMeView.as_view(), name="user_me"),
     path("", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
-    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    # Login View with token
+    path("api/token/", views.TokenObtainPairViewWrapper.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", views.TokenRefreshViewWrapper.as_view(), name="token_refresh"),
+    path("api/token/logout/", views.LogoutView.as_view(), name="token_logout"),
     # Additional auth endpoints
     path("api/register/", views.RegisterView.as_view(), name="register"),
     # Lists endpoints
-    path("lists/", views.ListCreateListView.as_view(), name="list_create_list"),
+    path("api/lists/", views.ListCreateListView.as_view(), name="list_create_list"),
     path(
-        "lists/<int:pk>/",
+        "api/lists/<int:pk>/",
         views.ListFindUpdateDeleteView.as_view(),
         name="list_find_update_delete",
     ),
     # Tasks endpoints
     path(
-        "lists/<int:list_pk>/tasks/",
+        "api/lists/<int:list_pk>/tasks/",
         views.TaskCreateListView.as_view(),
         name="task_list_create",
     ),
     path(
-        "lists/<int:list_pk>/tasks/<int:pk>/",
+        "api/lists/<int:list_pk>/tasks/<int:pk>/",
         views.TaskFindUpdateDeleteView.as_view(),
         name="task_find_update_delete",
     ),

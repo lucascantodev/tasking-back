@@ -48,10 +48,13 @@ class ListSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    listId = serializers.IntegerField(source="list.id", read_only=True)
+
     class Meta:
         model = Task
         fields = [
             "id",
+            "listId",
             "name",
             "description",
             "priority",
