@@ -162,6 +162,21 @@ class ListFindUpdateDeleteView(APIView):
         except List.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
+    def patch(self, request, pk):
+        try:
+            list_item = List.objects.get(pk=pk)
+            if list_item.user != request.user:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            serializer = ListSerializer(list_item, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(
+                serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY
+            )
+        except List.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
     def delete(self, request, pk):
         try:
             list_item = List.objects.get(pk=pk)
@@ -224,6 +239,24 @@ class TaskFindUpdateDeleteView(APIView):
             serializer = TaskSerializer(task, data=request.data)
             if serializer.is_valid():
                 serializer.save()
+                return Response(serializer.data)
+            return Response(
+                serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY
+            )
+        except (List.DoesNotExist, Task.DoesNotExist):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, list_pk, pk):
+        try:
+            list_item = List.objects.get(pk=list_pk)
+            if list_item.user != request.user:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            task = Task.objects.get(pk=pk, list=list_item)
+            print("Request Data: ", request.data)
+            serializer = TaskSerializer(task, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                print("Serializer Data: ", serializer.data)
                 return Response(serializer.data)
             return Response(
                 serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY
