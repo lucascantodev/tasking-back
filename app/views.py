@@ -64,17 +64,19 @@ class TokenObtainPairViewWrapper(APIView):
 # setting refreshToken in cookies
 class TokenRefreshViewWrapper(APIView):
     def post(self, request):
-        serializer = TokenRefreshSerializer(data=request.data)
+        serializer = TokenRefreshSerializer(data={"refresh": request.COOKIES["refreshToken"]})
         if serializer.is_valid():
             response = Response(serializer.validated_data, status=status.HTTP_200_OK)
-            response.set_cookie(
-                key="refreshToken",
-                value=serializer.validated_data["refresh"],
-                httponly=True,
-                secure=True,
-                samesite="None",  # required if frontend and backend are on different domains
-                max_age=60 * 60 * 24 * 7  # example: 7 days
-            )
+
+            if ("refresh" in serializer.validated_data):
+                response.set_cookie(
+                    key="refreshToken",
+                    value=serializer.validated_data["refresh"],
+                    httponly=True,
+                    secure=True,
+                    samesite="None",  # required if frontend and backend are on different domains
+                    max_age=60 * 60 * 24 * 7  # example: 7 days
+                )
 
             return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
