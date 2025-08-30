@@ -34,6 +34,9 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ListSerializer(serializers.ModelSerializer):
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
+    
     class Meta:
         model = List
         fields = [
@@ -42,13 +45,16 @@ class ListSerializer(serializers.ModelSerializer):
             "description",
             "priority",
             "status",
-            "created_at",
-            "updated_at",
+            "createdAt",
+            "updatedAt",
         ]
 
 
 class TaskSerializer(serializers.ModelSerializer):
     listId = serializers.IntegerField(source="list.id", read_only=True)
+    isComplete = serializers.BooleanField(source="is_complete", required=False)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
 
     class Meta:
         model = Task
@@ -59,6 +65,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "description",
             "priority",
             "status",
-            "created_at",
-            "updated_at",
+            "isComplete",
+            "createdAt",
+            "updatedAt",
         ]
