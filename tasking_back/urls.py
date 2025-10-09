@@ -10,6 +10,8 @@ router.register(r"groups", views.GroupViewSet)
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
+    # Don't delete. This route keep app alive!
+    path("wakeup/", lambda req: "Ok, thanks!", name="wake_app_up"),
     # Additional users endpoints
     path("users/me/", views.UserMeView.as_view(), name="user_me"),
     path("", include(router.urls)),
